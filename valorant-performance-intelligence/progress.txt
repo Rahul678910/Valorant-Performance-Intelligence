@@ -1,0 +1,80 @@
+# Progress Journal: Valorant Performance Intelligence
+=====================================================
+
+[2026-10-14 11:15] Initialization:
+- Created repository folder structure: data/ (raw/processed), notebooks/, src/, models/, reports/ (figures/), tests/.
+- Configured Python 3.11 virtual environment via uv.
+- Drafted requirements.txt and .gitignore.
+- Initialized PRD.md backlog.
+- Next Task: Task 1 - Data Synthesis & Ingestion Engine (src/data_processing.py).
+
+[2026-10-14 11:18] Task 1 Completed: Data Synthesis & Ingestion Engine
+- Task: Implement synthetic Valorant telemetry generator with realistic domain physics (agents, roles, maps, ranks, kills, deaths, assists, ACS, HS%, first bloods, clutches, economy, sides, results), validation schema, cleaning, and SQLite integration.
+- Modified files: src/__init__.py, src/data_processing.py, data/raw/valorant_matches.csv, data/processed/valorant_clean.csv, data/raw/valorant_telemetry.db
+- Key decisions: Generated 6,000 player-match rows with rank multipliers on HS% and role-based baseline kills/ACS/first bloods. Dual persisted to SQLite (matches table) and CSV.
+- Verification: Executed `python -m src.data_processing --n-samples 6000`, 100% domain checks passed (no negative values, HS% in [0, 100], valid agent/role/map/rank tags).
+- Next recommended task: Task 2 - Feature Engineering Pipeline (src/feature_engineering.py).
+
+[2026-10-14 11:19] Task 2 Completed: Feature Engineering Pipeline
+- Task: Implement leakage-safe feature engineering module with K/D, KDA, combat efficiency (ACS/min), first blood rate, and economy efficiency metrics, plus Scikit-Learn ColumnTransformer pipeline.
+- Modified files: src/feature_engineering.py, data/processed/valorant_features.csv, data/processed/valorant_features.parquet
+- Key decisions: Excluded target-leaking features (round_wins, round_losses, match_result) and IDs (player_id, match_id, date) from predictor feature set X. Standardized 14 numeric features and one-hot encoded 5 categorical features.
+- Verification: Executed `python -m src.feature_engineering`, confirmed 6,000 rows processed without nulls or infinite values, saved both CSV and Parquet formats.
+- Next recommended task: Task 3 - Exploratory Data Analysis & Visualization Report (reports/).
+
+[2026-10-14 11:20] Task 3 Completed: Exploratory Data Analysis & Visualization Report
+- Task: Generate publication-quality visualizations and tactical insight report covering Agent win rates, Role ACS distribution, Map side balance, Rank progression vs HS%, and combat metric correlations.
+- Modified files: src/eda_analysis.py, reports/figures/agent_winrates_and_kd.png, reports/figures/role_acs_distribution.png, reports/figures/map_side_bias.png, reports/figures/rank_headshot_correlation.png, reports/figures/metric_correlation_heatmap.png, reports/eda_insights.md
+- Key decisions: Visualized 5 core tactical dimensions with Matplotlib/Seaborn. Produced formal markdown findings highlighting first blood differential as leading outcome indicator and rank precision thresholds.
+- Verification: Executed `python -m src.eda_analysis`, generated all 5 PNG figures in reports/figures/ (200 DPI) and validated eda_insights.md.
+- Next recommended task: Task 4 - Model Training, Cross-Validation & Hyperparameter Tuning (src/train_model.py).
+
+[2026-10-14 11:21] Task 4 Completed: Model Training, Cross-Validation & Hyperparameter Tuning
+- Task: Benchmark 3 models (Logistic Regression, Random Forest, XGBoost) using Stratified 5-Fold Cross-Validation, evaluate out-of-sample performance, and serialize models & preprocessor.
+- Modified files: src/train_model.py, models/best_model.joblib, models/baseline_model.joblib, models/preprocessor.joblib, models/all_models.joblib, models/model_metadata.json
+- Key decisions: Logistic Regression and XGBoost demonstrated near-identical top-tier discriminatory power (Test ROC-AUC: 0.9783 vs 0.9715; Test Accuracy: 90.75% vs 90.50%). Both saved along with Random Forest for full evaluation.
+- Verification: Executed `python -m src.train_model`, cross-validation logged no leakage warnings, models cleanly persisted into models/ directory.
+- Next recommended task: Task 5 - Model Evaluation & SHAP Interpretability (src/evaluate_model.py).
+
+[2026-10-14 11:22] Task 5 Completed: Model Evaluation & SHAP Interpretability
+- Task: Evaluate trained classifiers, generate comparative ROC curves, confusion matrix, feature importance chart, SHAP summary beeswarm plot, and markdown evaluation report.
+- Modified files: src/evaluate_model.py, reports/figures/model_roc_curves.png, reports/figures/confusion_matrix.png, reports/figures/feature_importance.png, reports/figures/shap_summary.png, models/shap_explainer.joblib, reports/model_evaluation.md
+- Key decisions: Employed shap.TreeExplainer on XGBoost to explain nonlinear feature attributions; identified deaths, kd_ratio, first_bloods, and economy_rating as principal decision drivers.
+- Verification: Executed `python -m src.evaluate_model`, verified all 4 evaluation charts generated cleanly, serialized SHAP explainer, and produced reports/model_evaluation.md.
+- Next recommended task: Task 6 - Streamlit Interactive Dashboard (src/dashboard.py).
+
+[2026-10-14 11:23] Task 6 Completed: Streamlit Interactive Dashboard
+- Task: Build modular, responsive, multi-tab Streamlit dashboard with custom Valorant esports styling, Plotly charts, live win-probability prediction form, local SHAP feature breakdown, and AI tactical coaching advisor.
+- Modified files: src/dashboard.py
+- Key decisions: Configured 5 specialized tabs (Overview, Agent/Map Matrix, Win Predictor & SHAP, AI Coach, and ML Architecture), cached dataset and model loaders, and implemented client-side form for sub-second inference.
+- Verification: Validated script imports and component structure.
+- Next recommended task: Task 7 - Unit Testing Suite (tests/).
+
+[2026-10-14 11:25] Task 7 Completed: Unit Testing Suite
+- Task: Build and execute pytest unit test suite covering data synthesis & domain validation, feature engineering safety (zero divisions & leakage prevention), SQLite database persistence, and model inference calibration.
+- Modified files: tests/__init__.py, tests/test_data_processing.py, tests/test_feature_engineering.py, tests/test_model_inference.py, src/data_processing.py
+- Key decisions: Hardened SQLite connection handling with try/finally to avoid Windows handle locks; implemented dual-direction probability calibration checks on champion model inference.
+- Verification: Executed `pytest -v tests/`, 9/9 tests passed (100% pass rate in 1.48s).
+- Next recommended task: Task 8 - Verification, Documentation & Final Artifacts.
+
+[2026-10-14 11:28] Task 8 Completed: Verification, Documentation & Final Artifacts
+- Task: Verify live dashboard launch, capture headless UI screenshot, run unit tests, complete comprehensive README.md, and create system architecture and test verification artifacts.
+- Modified files: README.md, notebooks/exploratory_analysis.ipynb, reports/figures/dashboard_screenshot.png, PRD.md, progress.txt
+- Key decisions: Confirmed Streamlit server responds HTTP 200 OK on port 8501, verified Playwright headless UI screenshot (186 KB), verified 9/9 pytest tests pass with 100% success rate, and documented full project lifecycle.
+- Verification: All PRD.md checklist items completed. System verified and fully operational.
+
+[2026-10-14 13:22] GitHub Readiness Enhancements:
+- Task: Transform repository into a production-grade, GitHub-showcase repository with CI/CD automation, open-source standards, containerization, and developer utilities.
+- Added/Modified files:
+  - .github/workflows/ci.yml (Automated Python 3.10 & 3.11 GitHub Actions test matrix)
+  - .github/ISSUE_TEMPLATE/ (bug_report.md, feature_request.md)
+  - .github/pull_request_template.md
+  - LICENSE (MIT Open Source License)
+  - .gitattributes (Automated LF/CRLF normalization & binary asset definitions)
+  - pyproject.toml (PEP 517/518 build metadata & test configs)
+  - Dockerfile & docker-compose.yml & .dockerignore (One-command containerized deployment)
+  - CONTRIBUTING.md & CODE_OF_CONDUCT.md (Contributor Covenant guidelines)
+  - Makefile (Developer shortcuts for install, test, data, train, and dashboard)
+  - run.bat (Windows one-click launcher) & run.sh (Linux/macOS launcher)
+  - README.md (Comprehensive upgrade with shields.io badges, system architecture Mermaid diagram, benchmark tables, and embedded high-res visual assets)
+- Verification: Git status clean, committed atomically (`d7c8f60`), tested all file paths and relative image links.
